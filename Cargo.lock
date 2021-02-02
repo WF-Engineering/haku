@@ -937,20 +937,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "haku-client"
-version = "0.1.0"
-dependencies = [
- "bytes 0.5.6",
- "chrono",
- "log",
- "reqwest",
- "serde",
- "serde_json",
- "strum",
- "strum_macros",
-]
-
-[[package]]
 name = "haku-server"
 version = "0.1.0"
 dependencies = [
