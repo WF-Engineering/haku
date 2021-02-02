@@ -3,6 +3,10 @@ name = "haku-server"
 version = "0.1.0"
 authors = ["Arco Hsieh <yiyezhihen@gmail.com>", "Rosehsu <rosehsu47@gmail.com>"]
 edition = "2018"
+license = "MIT"
+description = "The Email sender system in WoWFood"
+homepage = "https://github.com/WF-Engineering/haku"
+repository = "https://github.com/WF-Engineering/haku"
 
 [dependencies]
 actix-cors = "0.5.4"
