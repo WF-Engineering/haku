@@ -65,10 +65,7 @@ async fn main() -> io::Result<()> {
       .wrap(
         Cors::default()
           .allowed_methods(vec!["POST"])
-          .allowed_headers(vec![
-            http::header::CONTENT_TYPE,
-            http::header::ACCEPT,
-          ])
+          .allowed_headers(vec![http::header::CONTENT_TYPE, http::header::ACCEPT])
           .max_age(3600),
       )
       .wrap(middleware::Logger::default())
@@ -94,8 +91,7 @@ fn load_env() {
 }
 
 async fn create_email_channels(conn: &Connection) -> HakuResult<EmailChannles> {
-  let (publish_chan, consume_chan) =
-    EmailDeclarer::create_pubcus_channels(conn).await?;
+  let (publish_chan, consume_chan) = EmailDeclarer::create_pubcus_channels(conn).await?;
   let queue = EmailDeclarer::declare_queue(&publish_chan).await?;
   debug!("email queue declare: {:?}", queue);
 
@@ -105,10 +101,7 @@ async fn create_email_channels(conn: &Connection) -> HakuResult<EmailChannles> {
   })
 }
 
-async fn setup_email_pub_cus(
-  conn: &Connection,
-  config: &Config,
-) -> HakuResult<EmailChannles> {
+async fn setup_email_pub_cus(conn: &Connection, config: &Config) -> HakuResult<EmailChannles> {
   let email_channels = create_email_channels(conn)
     .await
     .expect("Failed to create email channels");

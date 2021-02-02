@@ -97,10 +97,7 @@ impl HakuClient {
 }
 
 impl HakuClient {
-  pub async fn send_email(
-    &self,
-    body: body::EmailNotification,
-  ) -> HakuResult<()> {
+  pub async fn send_email(&self, body: body::EmailNotification) -> HakuResult<()> {
     debug!("prepare send email");
 
     debug!("body: {}", serde_json::to_string_pretty(&body).unwrap());

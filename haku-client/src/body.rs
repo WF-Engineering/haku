@@ -102,8 +102,7 @@ impl EmailNotificationBuilder {
   // TODO: 完全置換成新通知系統前，先塞 default 值
   pub fn default_required_args(self) -> Self {
     let mut inner = self.0;
-    inner.required_args =
-      serde_json::to_value(RequiredData::default()).unwrap();
+    inner.required_args = serde_json::to_value(RequiredData::default()).unwrap();
     Self(inner)
   }
 

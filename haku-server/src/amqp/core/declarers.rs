@@ -9,16 +9,9 @@ impl Declarer {
     conn.create_channel().await.map_err(HakuError::from)
   }
 
-  pub async fn declare_queue(
-    channel: &Channel,
-    name: &str,
-  ) -> HakuResult<Queue> {
+  pub async fn declare_queue(channel: &Channel, name: &str) -> HakuResult<Queue> {
     channel
-      .queue_declare(
-        name,
-        QueueDeclareOptions::default(),
-        FieldTable::default(),
-      )
+      .queue_declare(name, QueueDeclareOptions::default(), FieldTable::default())
       .await
       .map_err(HakuError::from)
   }

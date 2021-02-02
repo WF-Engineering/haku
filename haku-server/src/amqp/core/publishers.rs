@@ -1,6 +1,4 @@
-use lapin::{
-  options::*, publisher_confirm::Confirmation, BasicProperties, Channel,
-};
+use lapin::{options::*, publisher_confirm::Confirmation, BasicProperties, Channel};
 
 use crate::{HakuError, HakuResult};
 

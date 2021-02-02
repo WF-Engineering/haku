@@ -5,11 +5,7 @@ use crate::{HakuError, HakuResult};
 pub struct Consumer;
 
 impl Consumer {
-  pub async fn create(
-    channel: &Channel,
-    queue: &str,
-    tag: &str,
-  ) -> HakuResult<lapin::Consumer> {
+  pub async fn create(channel: &Channel, queue: &str, tag: &str) -> HakuResult<lapin::Consumer> {
     channel
       .basic_consume(
         queue,
