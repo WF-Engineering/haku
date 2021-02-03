@@ -1,0 +1,97 @@
+name: Release Haku Server
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  PROJECT_ID: ${{ secrets.GCE_PROJECT }}
+  GKE_CLUSTER: wf-cluster-1
+  GKE_ZONE: asia-east1-a
+  HAKU_PROD_ENV_FILE: ${{ secrets.HAKU_PROD_ENV_FILE }}
+  HAKU_DEV_ENV_FILE: ${{ secrets.HAKU_DEV_ENV_FILE }}
+
+jobs:
+  build-haku-server:
+    name: Build Haku Server Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup GCP CLI
+        uses: google-github-actions/setup-gcloud@master
+        with:
+          version: "290.0.1"
+          project_id: ${{ secrets.GCE_PROJECT }}
+          service_account_key: ${{ secrets.GCE_SA_KEY }}
+
+      - name: Configure Docker and Kubernetes
+        run: |-
+          gcloud --quiet auth configure-docker
+          gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE"
+
+      - name: Setup Environment Variables
+        run: |-
+          cargo generate-lockfile
+          VERSION="v$(cargo pkgid --manifest-path ./haku-server/Cargo.toml | cut -d'#' -f2)"
+          echo "SERVER_IMAGE=asia.gcr.io/$PROJECT_ID/haku-server:$VERSION" >> $GITHUB_ENV
+
+      - name: Build and Publish Haku Server
+        run: |-
+          docker build -f docker/Dockerfile.haku --tag "$SERVER_IMAGE" .
+          docker push "$SERVER_IMAGE"
+
+  deploy-kubernetes:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: [build-haku-server]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Checkout Kubernetes
+        uses: actions/checkout@v2
+        with:
+          repository: WF-Engineering/kubernetes
+          token: ${{ secrets.K8S_REPO_TOKEN }}
+          path: kubernetes
+
+      - name: Setup GCP CLI
+        uses: google-github-actions/setup-gcloud@master
+        with:
+          version: "290.0.1"
+          project_id: ${{ secrets.GCE_PROJECT }}
+          service_account_key: ${{ secrets.GCE_SA_KEY }}
+
+      - name: Configure Docker and Kubernetes
+        run: |-
+          gcloud --quiet auth configure-docker
+          gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE"
+
+      - name: Set up Kustomize
+        run: |-
+          curl -sfLo kustomize https://github.com/kubernetes-sigs/kustomize/releases/download/v3.1.0/kustomize_3.1.0_linux_amd64
+          sudo chmod 755 ./kustomize
+          sudo mv ./kustomize /usr/local/bin/kustomize
+
+      - name: Setup Environment Variables
+        run: |-
+          cargo generate-lockfile
+          VERSION="v$(cargo pkgid --manifest-path ./haku-server/Cargo.toml | cut -d'#' -f2)"
+          echo "SERVER_IMAGE=asia.gcr.io/$PROJECT_ID/haku-server:$VERSION" >> $GITHUB_ENV
+
+      - name: Deploy Release Haku Server
+        working-directory: kubernetes/projects/haku/overlays/release
+        run: |-
+          echo "$HAKU_PROD_ENV_FILE" > .env
+          kustomize edit set image "wowfood/haku-server=$SERVER_IMAGE"
+          kustomize build . | kubectl apply -f -
+
+      - name: Deploy Testing API Server
+        working-directory: kubernetes/projects/haku/overlays/testing
+        run: |-
+          echo "$HAKU_DEV_ENV_FILE" > .env
+          kustomize edit set image "wowfood/haku-server=$SERVER_IMAGE"
+          kustomize build . | kubectl apply -f -
