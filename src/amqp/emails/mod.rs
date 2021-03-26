@@ -66,6 +66,7 @@ impl EmailDelegator {
       debug!("email notification: {:?}", email_notification);
 
       let client = Sendinblue::production(sendinblue_api_key.to_string());
+
       let sender = Mailer::new(
         &email_notification.sender.name,
         &email_notification.sender.email,
@@ -99,110 +100,46 @@ fn create_payload(
   to_mailer: Mailer,
   email_notification: body::EmailNotification,
 ) -> TransactionalBody {
-  let required =
-    serde_json::from_value::<args::RequiredData>(email_notification.required_args).unwrap();
-
   let payload = TransactionalBody::builder()
     .set_sender(sender.clone())
     .add_to_mailer(to_mailer)
     .reply_to(sender)
     .template_id(email_notification.template.id as u32)
     .subject(email_notification.template.subject)
-    .add_params("brand_name", required.brand_name.clone())
-    .add_params("banner", required.banner.clone())
-    .add_params("homepage_link", required.homepage_link.clone())
-    .add_params("facebook_link", required.facebook_link.clone())
-    .add_params("instagram_link", required.instagram_link);
+    .add_values(email_notification.required_args);
 
   match email_notification.template.mode {
     body::TemplateMode::CreateOrder => {
-      let create_order =
-        serde_json::from_value::<args::CreateOrder>(email_notification.other_args).unwrap();
+      let order_created_at =
+        serde_json::from_value::<args::CreateOrder>(email_notification.other_args.clone())
+          .unwrap()
+          .formatted_dt();
 
       payload
-        .add_params("order_number", create_order.order_number.clone())
-        .add_params("order_created_at", create_order.formatted_dt())
-        .add_params("customer_name", create_order.customer_name)
-        .create()
-    }
-    body::TemplateMode::WarehouseDelivered => panic!("Unimplement"),
-    body::TemplateMode::LogisticsStatusChanged => panic!("Unimplement"),
-    body::TemplateMode::PaymentReturned => panic!("Unimplement"),
-    body::TemplateMode::AccountRegister => {
-      let signup = serde_json::from_value::<args::Signup>(email_notification.other_args).unwrap();
-
-      payload
-        .add_params("customer_name", signup.customer_name)
-        .add_params("link", signup.link)
-        .create()
-    }
-    body::TemplateMode::AccountForgotPassword => {
-      let forgot_password =
-        serde_json::from_value::<args::ForgotPassword>(email_notification.other_args).unwrap();
-
-      payload
-        .add_params("customer_name", forgot_password.customer_name)
-        .add_params("link", forgot_password.link)
-        .create()
-    }
-    body::TemplateMode::EarlyDelivery => {
-      let early_delivery =
-        serde_json::from_value::<args::EarlyDelivery>(email_notification.other_args).unwrap();
-
-      payload
-        .add_params("customer_name", early_delivery.customer_name)
-        .add_params("order_number", early_delivery.order_number)
-        .create()
-    }
-    body::TemplateMode::ShippingInfo => {
-      let shipping_info =
-        serde_json::from_value::<args::ShippingInfo>(email_notification.other_args).unwrap();
-
-      payload
-        .add_params("customer_name", shipping_info.customer_name)
-        .add_params("order_number", shipping_info.order_number)
-        .add_params("logistics_type_name", shipping_info.logistics_type_name)
-        .add_params("package_numbers", shipping_info.package_numbers)
-        .create()
-    }
-    body::TemplateMode::CvsArriveInfo => {
-      let cvs_arrive_info =
-        serde_json::from_value::<args::CvsArriveInfo>(email_notification.other_args).unwrap();
-
-      payload
-        .add_params("customer_name", cvs_arrive_info.customer_name)
-        .add_params("order_number", cvs_arrive_info.order_number)
-        .add_params("branch_name", cvs_arrive_info.branch_name)
-        .add_params("addressee_name", cvs_arrive_info.addressee_name)
-        .add_params("package_number", cvs_arrive_info.package_number)
-        .create()
-    }
-    body::TemplateMode::CsatSurvey => {
-      let csat_survey_info =
-        serde_json::from_value::<args::CsatSurvey>(email_notification.other_args).unwrap();
-
-      payload
-        .add_params("customer_name", csat_survey_info.customer_name)
-        .add_params("order_number", csat_survey_info.order_number)
-        .add_params("link", csat_survey_info.link)
+        .add_values(email_notification.other_args)
+        .add_params("order_created_at", order_created_at)
         .create()
     }
     body::TemplateMode::NewCreateOrder => {
-      let content =
-        serde_json::from_value::<args::OrderContent>(email_notification.other_args).unwrap();
+      let order_created_at =
+        serde_json::from_value::<args::OrderContent>(email_notification.other_args.clone())
+          .unwrap()
+          .formatted_dt();
 
       payload
-        .add_params("customer_name", content.customer_name.clone())
-        .add_params("order_number", content.order_number.clone())
-        .add_params_array("products", content.products.clone())
-        .add_params("products_subtotal", content.products_subtotal.to_string())
-        .add_params("promotion_discount", content.promotion_discount.to_string())
-        .add_params("delivery_fee", content.delivery_fee.to_string())
-        .add_params("total", content.total.to_string())
-        .add_params("order_number", content.order_number.clone())
-        .add_params("order_created_at", content.formatted_dt())
-        .add_params("customer_name", content.customer_name)
+        .add_values(email_notification.other_args)
+        .add_params("order_created_at", order_created_at)
         .create()
     }
+
+    body::TemplateMode::WarehouseDelivered => panic!("Unimplement"),
+    body::TemplateMode::LogisticsStatusChanged
+    | body::TemplateMode::PaymentReturned
+    | body::TemplateMode::AccountRegister
+    | body::TemplateMode::AccountForgotPassword
+    | body::TemplateMode::EarlyDelivery
+    | body::TemplateMode::ShippingInfo
+    | body::TemplateMode::CvsArriveInfo
+    | body::TemplateMode::CsatSurvey => payload.add_values(email_notification.other_args).create(),
   }
 }
