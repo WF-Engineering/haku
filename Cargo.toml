@@ -26,5 +26,4 @@ thiserror = "1.0"
 tokio-amqp = "0.1.3"
 
 # wowfood dependencies
-
-sendinblue = "0.1.0"
+sendinblue = "0.2.1"
