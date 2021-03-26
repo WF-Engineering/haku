@@ -40,7 +40,7 @@ jobs:
 
       - name: Build and Publish Haku Server
         run: |-
-          docker build -f docker/Dockerfile.haku --tag "$SERVER_IMAGE" .
+          docker build --tag "$SERVER_IMAGE" .
           docker push "$SERVER_IMAGE"
 
   deploy-kubernetes:
