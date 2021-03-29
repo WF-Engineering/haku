@@ -35,7 +35,7 @@ jobs:
       - name: Setup Environment Variables
         run: |-
           cargo generate-lockfile
-          VERSION="v$(cargo pkgid --manifest-path ./haku-server/Cargo.toml | cut -d'#' -f2)"
+          VERSION="v$(cargo pkgid --manifest-path ./Cargo.toml | cut -d'#' -f2 | cut -d':' -f2)"
           echo "SERVER_IMAGE=asia.gcr.io/$PROJECT_ID/haku-server:$VERSION" >> $GITHUB_ENV
 
       - name: Build and Publish Haku Server
