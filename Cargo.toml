@@ -1,6 +1,6 @@
 [package]
 name = "haku-server"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Arco Hsieh <yiyezhihen@gmail.com>", "Rosehsu <rosehsu47@gmail.com>"]
 edition = "2018"
 license = "MIT"
