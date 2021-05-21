@@ -1,0 +1,18 @@
+name: Fetch Rust Version
+
+on:
+  push:
+    branches:
+      - "fetch-version"
+
+jobs:
+  fetch-rust-version:
+    name: Fetch Rust Version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Fetch Version
+        run: |-
+          VERSION="v$(cargo pkgid | cut -d'#' -f2 | cut -d':' -f2)"
+          echo $VERSION
