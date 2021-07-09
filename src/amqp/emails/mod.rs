@@ -1,4 +1,3 @@
-mod args;
 mod body;
 
 use lapin::{
@@ -100,46 +99,13 @@ fn create_payload(
   to_mailer: Mailer,
   email_notification: body::EmailNotification,
 ) -> TransactionalBody {
-  let payload = TransactionalBody::builder()
+  TransactionalBody::builder()
     .set_sender(sender.clone())
     .add_to_mailer(to_mailer)
     .reply_to(sender)
     .template_id(email_notification.template.id as u32)
     .subject(email_notification.template.subject)
-    .add_values(email_notification.required_args);
-
-  match email_notification.template.mode {
-    body::TemplateMode::CreateOrder => {
-      let order_created_at =
-        serde_json::from_value::<args::CreateOrder>(email_notification.other_args.clone())
-          .unwrap()
-          .formatted_dt();
-
-      payload
-        .add_values(email_notification.other_args)
-        .add_params("order_created_at", order_created_at)
-        .create()
-    }
-    body::TemplateMode::NewCreateOrder => {
-      let order_created_at =
-        serde_json::from_value::<args::OrderContent>(email_notification.other_args.clone())
-          .unwrap()
-          .formatted_dt();
-
-      payload
-        .add_values(email_notification.other_args)
-        .add_params("order_created_at", order_created_at)
-        .create()
-    }
-
-    body::TemplateMode::WarehouseDelivered => panic!("Unimplement"),
-    body::TemplateMode::LogisticsStatusChanged
-    | body::TemplateMode::PaymentReturned
-    | body::TemplateMode::AccountRegister
-    | body::TemplateMode::AccountForgotPassword
-    | body::TemplateMode::EarlyDelivery
-    | body::TemplateMode::ShippingInfo
-    | body::TemplateMode::CvsArriveInfo
-    | body::TemplateMode::CsatSurvey => payload.add_values(email_notification.other_args).create(),
-  }
+    .add_values(email_notification.required_args)
+    .add_values(email_notification.other_args)
+    .create()
 }
