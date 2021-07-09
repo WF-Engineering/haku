@@ -1,9 +1,6 @@
 #[macro_use]
 extern crate log;
 
-#[macro_use]
-extern crate strum_macros;
-
 mod amqp;
 mod config;
 mod errors;
