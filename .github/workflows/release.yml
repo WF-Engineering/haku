@@ -35,10 +35,8 @@ jobs:
           gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE"
 
       - name: Setup Environment Variables
-        run: |-
-          cargo generate-lockfile
-          VERSION="v$(cargo pkgid --manifest-path ./Cargo.toml | cut -d'#' -f2 | cut -d':' -f2)"
-          echo "SERVER_IMAGE=asia.gcr.io/$PROJECT_ID/haku-server:$VERSION" >> $GITHUB_ENV
+        run: |
+          echo "SERVER_IMAGE=asia.gcr.io/$PROJECT_ID/haku-server:${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
       - name: Build and Publish Haku Server
         run: |-
@@ -51,21 +49,23 @@ jobs:
     needs: [build-haku-server]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@4
 
       - name: Checkout Kubernetes
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: WF-Engineering/kubernetes
           token: ${{ secrets.K8S_REPO_TOKEN }}
           path: kubernetes
 
-      - name: Setup GCP CLI
-        uses: google-github-actions/setup-gcloud@master
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
         with:
-          version: "290.0.1"
+          credentials_json: '${{ secrets.GCE_SA_KEY }}'
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
           project_id: ${{ secrets.GCE_PROJECT }}
-          service_account_key: ${{ secrets.GCE_SA_KEY }}
 
       - name: Configure Docker and Kubernetes
         run: |-
@@ -79,9 +79,8 @@ jobs:
           sudo mv ./kustomize /usr/local/bin/kustomize
 
       - name: Setup Environment Variables
-        run: |-
-          VERSION="v$(cargo pkgid | cut -d'#' -f2 | cut -d':' -f2)"
-          echo "SERVER_IMAGE=asia.gcr.io/$PROJECT_ID/haku-server:$VERSION" >> $GITHUB_ENV
+        run: |
+          echo "SERVER_IMAGE=asia.gcr.io/$PROJECT_ID/haku-server:${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
       - name: Deploy Release Haku Server
         working-directory: kubernetes/projects/haku/overlays/release
